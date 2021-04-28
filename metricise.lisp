@@ -1,0 +1,83 @@
+(ql:quickload "cl-strings")
+
+(defun stuffs (expression)
+  (cond ((null expression)
+         0)
+        ((atom expression)
+         1)
+        (t (let ((car (car expression))
+                 (cdr (cdr expression)))
+             (multiple-value-bind (car-count car-operators car-operands)
+                 (stuffs car)
+               (multiple-value-bind (cdr-count cdr-operators cdr-operands)
+                   (if (atom cdr)
+                       (stuffs cdr)
+                       (let ((count 0)
+                             (operators nil)
+                             (operands nil))
+                         (dolist (operand cdr)
+                           (multiple-value-bind (one-count one-operators one-operands)
+                               (stuffs operand)
+                             (incf count one-count)
+                             (setf operators (append operators one-operators))
+                             (setf operands (append operands one-operands))))
+                         (values count operators operands)))
+                 (values (+ car-count cdr-count 1)
+                         (remove-if-not #'atom
+                                        (append (list car)
+                                                car-operators
+                                                cdr-operators))
+                         (append (remove-if-not #'atom cdr)
+                                 car-operands
+                                 cdr-operands))))))))
+;; needs special cases for let(*), defun, mvb...
+
+(defun concat (&rest strings)
+  (apply #'concatenate 'string strings))
+
+(defun multi-metrics (files)
+  (let ((exprs (read-from-string (concatenate 'string
+                                              "("
+                                              (reduce #'concat (mapcar #'(lambda (file)
+                                                                           (cl-strings:join (uiop:read-file-lines file) :separator "
+"))
+                                                                       files))
+                                              ")")))
+        (count 0)
+        operators
+        operands)
+    (dolist (expr exprs)
+      (multiple-value-bind (one-count one-operators one-operands)
+          (stuffs expr)
+        (incf count one-count)
+        (setf operators (append operators one-operators))
+        (setf operands (append operands one-operands))))
+    (metrics count operators operands)))
+
+(defun metrics (count operators operands)
+  (let* ((unique-operators (length (remove-duplicates operators)))
+         (unique-operands (length (remove-duplicates operands)))
+         (vocab (+ 1 ;; parentheses
+                   unique-operators
+                   unique-operands))
+         (volume (* vocab (log vocab 2)))
+         (difficulty (* 0.5 unique-operators (/ (length operands) unique-operands)))
+         (effort (* difficulty volume)))
+    (print "vocab:")
+    (print vocab)
+    (print "length:")
+    (print count)
+    (print "volume:")
+    (print volume)
+    (print "difficulty:")
+    (print difficulty)
+    (print "effort:")
+    (print effort)
+    (print "time:")
+    (print (/ effort 18))
+    (print "bugs:")
+    (print (/ (expt effort 2/3)
+              3000))
+    (princ "or ")
+    (princ (/ volume
+              3000))))

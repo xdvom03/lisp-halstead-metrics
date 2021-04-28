@@ -1,5 +1,5 @@
 # lisp-halstead-metrics
-Measuring Halstead metrics for Lisp source code. Made for fun, shared in the hopes that it might be interesting for others, but it is very un-
+Measuring Halstead metrics for Lisp source code. Made for fun, shared in the hopes that it might be interesting for others, but very un-
 
 # Known issues
 * Packages in the code that you want to get metrics for must exist in the system you run the metrics from (e.g. you must load Quicklisp libraries which the code uses).
